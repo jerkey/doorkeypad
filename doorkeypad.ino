@@ -1,20 +1,23 @@
-#define COL1 6   // 12 amarillo
-#define COL2 7   // 13 verde
-#define COL3 8   // 14 anaranjado
-#define ROW1 9   // 15 azul
-#define ROW2 10  // 16 rojo
-#define ROW3 11  // 17 negro
-#define ROW4 12  // 18 blanco
-#define REDPIN 2 // 4 red LED +
-#define GREENPIN 13  // 19 green LED +
-#define BLUEPIN 5  // 11 blue LED +
-#define NOISEPIN 3   // 5 noisemaker
+#define BAUDRATE        300 // serial port baud rate
+#define COL1 2    // 2       0,2,5,7
+#define ROW1 3    // 3       9,0,#
+#define COL2 4    // 4       #,3,*,8
+#define ROW2 5    // 5       3,2,1
+#define COL3 6    // 6       9,1,4,6
+#define ROW3 7    // 7       4,5,*
+#define ROW4 8    // 8       6,7,8
+#define REDPIN 9  // 
+#define GREENPIN 11  // 
+#define BLUEPIN  10  // 
+#define NOISEPIN 12  // 
 #define SADTONE 200  // sad tone frequency
 #define SADTIME 500  // sadtone time in milliseconds
-#define HAPPYTONE 1000   // happy tone frequency
+#define HAPPYTONE 1000  // happy tone frequency
 #define HAPPYTIME 500   // happy tone time in milliseconds
-#define CLICKTONE 5000   // button press noise frequency
-#define CLICKTIME 25   // button press noise time in milliseconds
+#define CLICKTONE 5000  // button press noise frequency
+#define CLICKTIME 25    // button press noise time in milliseconds
+#define STAR    11
+#define POUND   12
 
 // int one,two,three,four,five,six,seven,eight,nine,zero,star,pound;
 int butt[13] = {
@@ -32,15 +35,13 @@ unsigned long redlastime = 0;
 unsigned long greenlastime = 0;
 unsigned long bluelastime = 0;
 unsigned long noiselastime = 0;
-unsigned long nowtime;
-unsigned long debouncetime = 250;  // minimum milliseconds between buttonpresses
-unsigned long redtime = 1000;
-unsigned long greentime = 1000;
-unsigned long bluetime = 1000;
-unsigned long noisetime = 1000;
+#define DEBOUNCETIME 250   // minimum milliseconds between buttonpresses
+#define REDTIME 1000 
+#define GREENTIME 1000 
+#define BLUETIME 1000 
 int lastbutt = 0;
 
-void setup()
+void initPins()
 {
   pinMode(COL1,OUTPUT);
   pinMode(COL2,OUTPUT);
@@ -53,54 +54,61 @@ void setup()
   digitalWrite(ROW2,HIGH);
   digitalWrite(ROW3,HIGH);
   digitalWrite(ROW4,HIGH);
-  Serial.begin(300);          // BAUD RATE IS SET HERE
   pinMode(REDPIN,OUTPUT);
   pinMode(GREENPIN,OUTPUT);
   pinMode(BLUEPIN,OUTPUT);
   pinMode(NOISEPIN,OUTPUT);
-  Serial.println("HELLO");
   digitalWrite(GREENPIN,HIGH);
   digitalWrite(REDPIN,HIGH);
   digitalWrite(BLUEPIN,HIGH);
-  nowtime = millis();
-  tone(3, HAPPYTONE, HAPPYTIME);
+}
+
+void scanButts()
+{
+  digitalWrite(COL1,LOW); // 2       0,2,5,7
+  digitalWrite(COL2,HIGH);
+  digitalWrite(COL3,HIGH);
+  butt[10] = !digitalRead(ROW1);
+  butt[2] = !digitalRead(ROW2);
+  butt[5] = !digitalRead(ROW3);
+  butt[7] = !digitalRead(ROW4);
+
+  digitalWrite(COL1,HIGH);
+  digitalWrite(COL2,LOW); // 4       #,3,*,8
+  digitalWrite(COL3,HIGH);
+  butt[POUND] = !digitalRead(ROW1);
+  butt[3]     = !digitalRead(ROW2);
+  butt[STAR]  = !digitalRead(ROW3);
+  butt[8]     = !digitalRead(ROW4);
+
+  digitalWrite(COL1,HIGH);
+  digitalWrite(COL2,HIGH);
+  digitalWrite(COL3,LOW); // 6       9,1,4,6
+  butt[9] = !digitalRead(ROW1);
+  butt[1] = !digitalRead(ROW2);
+  butt[4] = !digitalRead(ROW3);
+  butt[6] = !digitalRead(ROW4);
+}
+
+void setup()
+{
+  initPins();
+  Serial.begin(BAUDRATE);
+  Serial.println("HELLO");
+  tone(NOISEPIN, HAPPYTONE, HAPPYTIME);
 }
 
 void loop()
 {
-  digitalWrite(COL1,LOW);
-  digitalWrite(COL2,HIGH);
-  digitalWrite(COL3,HIGH);
-  butt[1] = !digitalRead(ROW1);
-  butt[4] = !digitalRead(ROW2);
-  butt[7] = !digitalRead(ROW3);
-  butt[11] = !digitalRead(ROW4);
-
-  digitalWrite(COL1,HIGH);
-  digitalWrite(COL2,LOW);
-  digitalWrite(COL3,HIGH);
-  butt[2] = !digitalRead(ROW1);
-  butt[5] = !digitalRead(ROW2);
-  butt[8] = !digitalRead(ROW3);
-  butt[10] = !digitalRead(ROW4);
-
-  digitalWrite(COL1,HIGH);
-  digitalWrite(COL2,HIGH);
-  digitalWrite(COL3,LOW);
-  butt[3] = !digitalRead(ROW1);
-  butt[6] = !digitalRead(ROW2);
-  butt[9] = !digitalRead(ROW3);
-  butt[12] = !digitalRead(ROW4);
-
-  int tempbutt = oneisdown();
-  nowtime = millis();
+  scanButts(); // update array of which buttons are pressed
+  int tempbutt = oneisdown(); // returns 0 unless exactly one button is pressed
   if (tempbutt != 0) {
-    if (tempbutt != lastbutt)
-      if  (nowtime - lastime > debouncetime) {
+    if (tempbutt != lastbutt) // only do this once per button press
+      if  (millis() - lastime > DEBOUNCETIME) {
         Serial.print(chars[tempbutt]);
         lastbutt = tempbutt;
-        lastime = nowtime;
-              tone(3, CLICKTONE, CLICKTIME);
+        lastime = millis();
+        tone(NOISEPIN, CLICKTONE, CLICKTIME);
       }   
   } 
   else       
@@ -112,57 +120,43 @@ int oneisdown() {
   int prest,sum = 0;
   for (int i = 1; i < 13; i++) {
     sum += butt[i];
-    if (butt[i]) 
-      prest = i;
+    if (butt[i]) prest = i;
   }
-  if (sum == 1) 
+  if (sum == 1) {
     return prest;
-  else return 0;
+  } else {
+    return 0;
+  }
 }
 
 void handleserial() {
   if (Serial.available() > 0) {
     switch (Serial.read()) {
     case 'R':    // R is for Red LED
-//      Serial.println("RED");
       digitalWrite(REDPIN,HIGH);
-      redlastime = nowtime;
+      redlastime = millis();
       break;
     case 'G':    // G is for Green LED
-//      Serial.println("GREEN");
       digitalWrite(GREENPIN,HIGH);
-      greenlastime = nowtime;
+      greenlastime = millis();
       break;
     case 'B':    // B is for Blue LED
-//      Serial.println("BLUE");
-      analogWrite(BLUEPIN,127);
-      bluelastime = nowtime;
+      digitalWrite(BLUEPIN,HIGH);
+      bluelastime = millis();
       break;
     case 'H': // make a happy tone
-      tone(3, HAPPYTONE, HAPPYTIME);
-//      Serial.println("HAPPY");
+      tone(NOISEPIN, HAPPYTONE, HAPPYTIME);
       break;
     case 'S': // make a sad tone
- :     tone(3, SADTONE, SADTIME);
-//      Serial.println("SAD");
+      tone(NOISEPIN, SADTONE, SADTIME);
       break;
     case 'Q':  // mute the current tone and print QUIET
-      noTone(3);
+      noTone(NOISEPIN);
       Serial.println("QUIET");
       break;
     }
   }
-  if (nowtime - redlastime > redtime) digitalWrite(REDPIN,LOW);
-  if (nowtime - greenlastime > greentime) digitalWrite(GREENPIN,LOW);
-  if (nowtime - bluelastime > bluetime) digitalWrite(BLUEPIN,LOW);
+  if (millis() - redlastime > REDTIME) digitalWrite(REDPIN,LOW);
+  if (millis() - greenlastime > GREENTIME) digitalWrite(GREENPIN,LOW);
+  if (millis() - bluelastime > BLUETIME) digitalWrite(BLUEPIN,LOW);
 }
-
-
-
-
-
-
-
-
-
-
