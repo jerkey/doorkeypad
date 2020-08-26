@@ -1,0 +1,18 @@
+HELLO: Finished loadFromEEPROM
+0       1717920803    # first uint32_t of the array, from EEPROM raw data of '#define BAUDRATE'
+1       543518313
+2       1146437954
+3       1163149650
+$ python3   # https://www.kite.com/python/answers/how-to-convert-an-int-to-bytes-in-python
+>>> int(1717920803).to_bytes(4,'little')
+b'#def'
+>>> int(543518313).to_bytes(4,'little')
+b'ine '
+>>> int(1146437954).to_bytes(4,'little')
+b'BAUD'
+>>> int(1163149650).to_bytes(4,'little')
+b'RATE'
+>>> int.from_bytes(int(1146437954).to_bytes(4,'little'),'little')
+1146437954
+>>> int.from_bytes(b'RATE','little')
+1163149650

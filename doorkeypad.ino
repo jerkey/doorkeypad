@@ -18,12 +18,16 @@
 #define CLICKTIME 25    // button press noise time in milliseconds
 #define STAR    11
 #define POUND   12
+#define ENTRYCODETIMEOUT 5000 // after no button pressed, clear entry code attempt
+
+static uint32_t validcodes[256] = {0}; // RAM array to store valid codes
 
 // int one,two,three,four,five,six,seven,eight,nine,zero,star,pound;
 int butt[13] = {
   0,0,0,0,0,0,0,0,0,0,0,0};
 char chars[13] = {
   'X','1','2','3','4','5','6','7','8','9','0','*','#'};
+String entrycode = ""; // string gets built up to try an access code
 
 // THIS PROGRAM IS FOR A TWELVE-BUTTON NUMERIC KEYPAD FOR SECURE OPENING
 // OF THE GATE AT A HACKERSPACE OR ANY OTHER PLACE.
@@ -40,6 +44,32 @@ unsigned long noiselastime = 0;
 #define GREENTIME 1000 
 #define BLUETIME 1000 
 int lastbutt = 0;
+
+#include <EEPROM.h>
+
+void loadFromEEPROM() {
+  for (int i=0; i < 256; i++) EEPROM.get(i * 4, validcodes[i]); // load codes from EEPROM
+}
+
+void tryentrycode(char latestchar) {
+  if (latestchar == '*') {
+    entrycode = ""; // clear the code
+    return;
+  }
+  if (latestchar != '#') entrycode += latestchar; // tack on digit unless #
+  if ((entrycode.length() > 8) || (latestchar == '#')) { // if enough digits or #
+    char arr[12];
+    entrycode.toCharArray(arr, sizeof(arr));
+    uint32_t attemptedcode = atol(arr);
+    for (int i=0; i < 256; i++) {
+      if (attemptedcode == validcodes[i]) {
+        Serial.print("\n"+String(attemptedcode)+" found in record "+String(i));
+      }
+    }
+    entrycode = "";
+  }
+}
+
 
 void initPins()
 {
@@ -94,7 +124,9 @@ void setup()
 {
   initPins();
   Serial.begin(BAUDRATE);
-  Serial.println("HELLO");
+  Serial.print("github.com/jerkey/doorkeypad");
+  loadFromEEPROM(); // load access codes from EEPROM into RAM
+  // for (int l = 0; l<8; l++) Serial.println(String(l)+"	"+validcodes[l]); // for diagnosing EEPROM
   tone(NOISEPIN, HAPPYTONE, HAPPYTIME);
 }
 
@@ -106,6 +138,7 @@ void loop()
     if (tempbutt != lastbutt) // only do this once per button press
       if  (millis() - lastime > DEBOUNCETIME) {
         Serial.print(chars[tempbutt]);
+        tryentrycode(chars[tempbutt]); // see if we've entered a code
         lastbutt = tempbutt;
         lastime = millis();
         tone(NOISEPIN, CLICKTONE, CLICKTIME);
@@ -114,6 +147,9 @@ void loop()
   else       
     lastbutt = tempbutt;
   handleserial();
+  if (millis() - lastime > ENTRYCODETIMEOUT) {
+    entrycode = ""; // clear the code, time went by
+  }
 }
 
 int oneisdown() {
