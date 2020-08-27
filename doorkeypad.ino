@@ -8,12 +8,12 @@
 #define ROW4 10-8    // 8       6,7,8
 #define REDPIN 9  // 
 #define GREENPIN 11  // 
-#define BLUEPIN  10  // 
+#define LATCHPIN  13  // GATE LATCH active high
 #define NOISEPIN 12  // 
 #define SADTONE 200  // sad tone frequency
 #define SADTIME 500  // sadtone time in milliseconds
 #define HAPPYTONE 1000  // happy tone frequency
-#define HAPPYTIME 500   // happy tone time in milliseconds
+#define HAPPYTIME 750   // happy tone time in milliseconds
 #define CLICKTONE 5000  // button press noise frequency
 #define CLICKTIME 25    // button press noise time in milliseconds
 #define STAR    11
@@ -37,15 +37,19 @@ String entrycode = ""; // string gets built up to try an access code
 unsigned long lastime = 0;
 unsigned long redlastime = 0;
 unsigned long greenlastime = 0;
-unsigned long bluelastime = 0;
-unsigned long noiselastime = 0;
+unsigned long latchlastime = 0;
 #define DEBOUNCETIME 250   // minimum milliseconds between buttonpresses
 #define REDTIME 1000 
 #define GREENTIME 1000 
-#define BLUETIME 1000 
+#define LATCHTIME 7000 // how long latch should stay activated
 int lastbutt = 0;
 
 #include <EEPROM.h>
+
+void activateLatch() {
+  digitalWrite(LATCHPIN,HIGH);
+  latchlastime = millis();
+}
 
 void loadFromEEPROM() {
   for (int i=0; i < 256; i++) EEPROM.get(i * 4, validcodes[i]); // load codes from EEPROM
@@ -64,6 +68,8 @@ void tryentrycode(char latestchar) {
     for (int i=0; i < 256; i++) {
       if (attemptedcode == validcodes[i]) {
         Serial.print("\n"+String(attemptedcode)+" found in record "+String(i));
+        tone(NOISEPIN, HAPPYTONE, HAPPYTIME);
+        activateLatch(); // let the gate be opened
       }
     }
     entrycode = "";
@@ -86,11 +92,11 @@ void initPins()
   digitalWrite(ROW4,HIGH);
   pinMode(REDPIN,OUTPUT);
   pinMode(GREENPIN,OUTPUT);
-  pinMode(BLUEPIN,OUTPUT);
+  pinMode(LATCHPIN,OUTPUT);
   pinMode(NOISEPIN,OUTPUT);
   digitalWrite(GREENPIN,HIGH);
   digitalWrite(REDPIN,HIGH);
-  digitalWrite(BLUEPIN,HIGH);
+  digitalWrite(LATCHPIN,LOW);
 }
 
 void scanButts()
@@ -143,13 +149,12 @@ void loop()
         lastime = millis();
         tone(NOISEPIN, CLICKTONE, CLICKTIME);
       }   
-  } 
-  else       
+  } else { // oneisdown() returned 0
     lastbutt = tempbutt;
-  handleserial();
-  if (millis() - lastime > ENTRYCODETIMEOUT) {
-    entrycode = ""; // clear the code, time went by
   }
+  handleserial();
+  if (millis() - lastime > ENTRYCODETIMEOUT) entrycode = ""; // clear the code, time went by
+  if (millis() - latchlastime > LATCHTIME) digitalWrite(LATCHPIN,LOW); // timeout latch activation
 }
 
 int oneisdown() {
@@ -176,9 +181,8 @@ void handleserial() {
       digitalWrite(GREENPIN,HIGH);
       greenlastime = millis();
       break;
-    case 'B':    // B is for Blue LED
-      digitalWrite(BLUEPIN,HIGH);
-      bluelastime = millis();
+    case 'L':    // L is for LATCH
+      activateLatch();
       break;
     case 'H': // make a happy tone
       tone(NOISEPIN, HAPPYTONE, HAPPYTIME);
@@ -194,5 +198,4 @@ void handleserial() {
   }
   if (millis() - redlastime > REDTIME) digitalWrite(REDPIN,LOW);
   if (millis() - greenlastime > GREENTIME) digitalWrite(GREENPIN,LOW);
-  if (millis() - bluelastime > BLUETIME) digitalWrite(BLUEPIN,LOW);
 }
