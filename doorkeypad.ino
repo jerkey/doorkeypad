@@ -1,11 +1,11 @@
-#define BAUDRATE        300 // serial port baud rate
-#define COL1 2    // 2       0,2,5,7
-#define ROW1 3    // 3       9,0,#
-#define COL2 4    // 4       #,3,*,8
-#define ROW2 5    // 5       3,2,1
-#define COL3 6    // 6       9,1,4,6
-#define ROW3 7    // 7       4,5,*
-#define ROW4 8    // 8       6,7,8
+#define BAUDRATE        57600 // serial port baud rate
+#define COL1 10-2    // 2       0,2,5,7
+#define ROW1 10-3    // 3       9,0,#
+#define COL2 10-4    // 4       #,3,*,8
+#define ROW2 10-5    // 5       3,2,1
+#define COL3 10-6    // 6       9,1,4,6
+#define ROW3 10-7    // 7       4,5,*
+#define ROW4 10-8    // 8       6,7,8
 #define REDPIN 9  // 
 #define GREENPIN 11  // 
 #define BLUEPIN  10  // 
