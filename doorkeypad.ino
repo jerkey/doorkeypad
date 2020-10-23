@@ -131,7 +131,7 @@ void setup()
 {
   initPins();
   Serial.begin(BAUDRATE);
-  Serial.print("github.com/jerkey/doorkeypad");
+  Serial.println("github.com/jerkey/doorkeypad");
   loadFromEEPROM(); // load access codes from EEPROM into RAM
   // for (int l = 0; l<8; l++) Serial.println(String(l)+"	"+validcodes[l]); // for diagnosing EEPROM
   tone(NOISEPIN, HAPPYTONE, HAPPYTIME);
