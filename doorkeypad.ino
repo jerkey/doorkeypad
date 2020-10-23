@@ -18,6 +18,16 @@
 #define POUND   12
 #define ENTRYCODETIMEOUT 5000 // after no button pressed, clear entry code attempt
 
+#include <SPI.h>    //      Arduino       Arduino   Arduino    Arduino          Arduino
+#include <MFRC522.h>//      Uno/101       Mega      Nano v3    Leonardo/Micro   Pro Micro
+// SPI SS      SDA(SS)      10            53        D10        10               10
+// SPI MOSI    MOSI         11 / ICSP-4   51        D11        ICSP-4           16
+// SPI MISO    MISO         12 / ICSP-1   50        D12        ICSP-1           14
+// SPI SCK     SCK          13 / ICSP-3   52        D13        ICSP-3           15
+#define RST_PIN         A0         // Configurable, see typical pin layout above
+#define SS_PIN          A1         // Configurable, see typical pin layout above
+MFRC522 mfrc522(SS_PIN, RST_PIN);  // Create MFRC522 instance
+
 static uint32_t validcodes[256] = {0}; // RAM array to store valid codes
 
 // int one,two,three,four,five,six,seven,eight,nine,zero,star,pound;
@@ -125,10 +135,16 @@ void setup()
   loadFromEEPROM(); // load access codes from EEPROM into RAM
   // for (int l = 0; l<8; l++) Serial.println(String(l)+"	"+validcodes[l]); // for diagnosing EEPROM
   tone(NOISEPIN, HAPPYTONE, HAPPYTIME);
+
+  SPI.begin();			// Init SPI bus
+  mfrc522.PCD_Init();		// Init MFRC522
+  delay(4);				// Optional delay. Some board do need more time after init to be ready, see Readme
+  mfrc522.PCD_DumpVersionToSerial();	// Show details of PCD - MFRC522 Card Reader details
 }
 
 void loop()
 {
+  handleRFID();
   scanButts(); // update array of which buttons are pressed
   int tempbutt = oneisdown(); // returns 0 unless exactly one button is pressed
   if (tempbutt != 0) {
@@ -179,6 +195,22 @@ void handleserial() {
       break;
     }
   }
-  if (millis() - redlastime > REDTIME) digitalWrite(REDPIN,LOW);
-  if (millis() - greenlastime > GREENTIME) digitalWrite(GREENPIN,LOW);
+}
+
+byte readCard[4];   // Stores scanned ID read from RFID Module
+
+uint8_t handleRFID() {
+  if ( ! mfrc522.PICC_IsNewCardPresent()) { //If a new PICC placed to RFID reader continue
+    return 0;
+  }
+  if ( ! mfrc522.PICC_ReadCardSerial()) {   //Since a PICC placed get Serial and continue
+    return 0;
+  }
+  mfrc522.PICC_HaltA(); // Stop reading
+  for (byte i = 0; i < mfrc522.uid.size; i++) {
+    if(mfrc522.uid.uidByte[i] < 0x10) Serial.print(F("0"));
+    Serial.print(mfrc522.uid.uidByte[i], HEX);
+  }
+  Serial.println();
+  return 1;
 }
