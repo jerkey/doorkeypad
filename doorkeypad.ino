@@ -64,6 +64,7 @@ void tryentrycode(char latestchar) {
         Serial.print("\n"+String(attemptedcode)+" found in record "+String(i));
         tone(NOISEPIN, HAPPYTONE, HAPPYTIME);
         activateLatch(); // let the gate be opened
+        return;
       }
     }
     entrycode = "";
@@ -134,11 +135,11 @@ void loop()
     if (tempbutt != lastbutt) // only do this once per button press
       if  (millis() - lastime > DEBOUNCETIME) {
         Serial.print(chars[tempbutt]);
+        tone(NOISEPIN, CLICKTONE, CLICKTIME);
         tryentrycode(chars[tempbutt]); // see if we've entered a code
         lastbutt = tempbutt;
         lastime = millis();
-        tone(NOISEPIN, CLICKTONE, CLICKTIME);
-      }   
+      }
   } else { // oneisdown() returned 0
     lastbutt = tempbutt;
   }
