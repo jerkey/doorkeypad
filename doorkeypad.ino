@@ -67,7 +67,7 @@ void tryentrycode(char latestchar) {
     uint32_t attemptedcode = atol(arr);
     for (int i=0; i < 256; i++) {
       if (attemptedcode == validcodes[i]) {
-        Serial.print("\n"+String(attemptedcode)+" found in record "+String(i));
+        Serial.println("\n"+String(attemptedcode)+" found in record "+String(i));
         tone(NOISEPIN, HAPPYTONE, HAPPYTIME);
         activateLatch(); // let the gate be opened
         return;
