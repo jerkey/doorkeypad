@@ -1,19 +1,19 @@
 #define BAUDRATE        57600 // serial port baud rate
-#define COL1 10-2    // 2       0,2,5,7
-#define ROW1 10-3    // 3       9,0,#
-#define COL2 10-4    // 4       #,3,*,8
-#define ROW2 10-5    // 5       3,2,1
-#define COL3 10-6    // 6       9,1,4,6
-#define ROW3 10-7    // 7       4,5,*
-#define ROW4 10-8    // 8       6,7,8
-#define REDPIN 9  // 
+#define COL1    2    // 2       0,2,5,7
+#define ROW1    3    // 3       9,0,#
+#define COL2    4    // 4       #,3,*,8
+#define ROW2    5    // 5       3,2,1
+#define COL3    6    // 6       9,1,4,6
+#define ROW3    7    // 7       4,5,*
+#define ROW4    8    // 8       6,7,8
+#define REDPIN   13  //
 #define GREENPIN 11  // 
-#define LATCHPIN  13  // GATE LATCH active high
-#define NOISEPIN 12  // 
-#define SADTONE 200  // sad tone frequency
-#define SADTIME 500  // sadtone time in milliseconds
+#define LATCHPIN  9  // GATE LATCH active high
+#define NOISEPIN 10  //
+#define SADTONE 100  // sad tone frequency
+#define SADTIME 900  // sadtone time in milliseconds
 #define HAPPYTONE 1000  // happy tone frequency
-#define HAPPYTIME 750   // happy tone time in milliseconds
+#define HAPPYTIME 1500  // happy tone time in milliseconds
 #define CLICKTONE 5000  // button press noise frequency
 #define CLICKTIME 25    // button press noise time in milliseconds
 #define STAR    11
